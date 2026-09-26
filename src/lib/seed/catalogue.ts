@@ -1,6 +1,7 @@
 import { CATALOGUE_SCHEMA_VERSION } from "@/lib/domain/schema";
 import type { Catalogue } from "@/lib/domain/types";
 import { SEED_SERVICES } from "./services";
+import { createDefaultTiers } from "./tiers";
 
 export const DEFAULT_BRAND_COLOUR = "#2563eb";
 
@@ -14,7 +15,7 @@ export function createSeedCatalogue(): Catalogue {
     brandColour: DEFAULT_BRAND_COLOUR,
     currency: "INR",
     services: structuredClone(SEED_SERVICES),
-    tiers: [],
+    tiers: createDefaultTiers(),
     sizing: { endpoints: 500, users: 400, gbPerDay: 20, contractMonths: 36 },
     createdAt: now,
     updatedAt: now,

@@ -17,6 +17,8 @@ export class LocalStorageCatalogueRepository implements CatalogueRepository {
     } catch (error) {
       console.warn("Saved catalogue is not valid JSON; starting from defaults.", error);
     }
+    // Keep the unreadable data so it isn't lost when the defaults are saved over it.
+    window.localStorage.setItem(`${this.key}:unreadable-backup`, raw);
     return null;
   }
 

@@ -38,3 +38,13 @@ export const PRICING_UNIT_LABELS: Record<PricingUnit, string> = {
   gbDay: "per GB-day",
   flatMonthly: "flat monthly",
 };
+
+export const INCLUSION_LABELS: Record<Inclusion, string> = {
+  included: "Included",
+  addOn: "Add-on",
+};
+
+/** Display name for a tier, tolerating a blank name mid-edit. */
+export function tierLabel(tier: Pick<Tier, "name">): string {
+  return tier.name.trim() || "Untitled tier";
+}

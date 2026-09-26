@@ -33,8 +33,8 @@ export const serviceSchema = z.object({
 });
 
 export const severityTargetSchema = z.object({
-  responseMinutes: z.number().finite().positive(),
-  resolutionHours: z.number().finite().positive(),
+  responseMinutes: z.number().finite().min(0),
+  resolutionHours: z.number().finite().min(0),
 });
 
 export const slaSchema = z.object({
@@ -55,7 +55,7 @@ export const tierServiceSchema = z.object({
 
 export const tierSchema = z.object({
   id: z.string().min(1),
-  name: text(60).min(1, "Tier name is required"),
+  name: text(60),
   services: z.array(tierServiceSchema),
   sla: slaSchema,
   marginPercent: nonNegative.max(1000),

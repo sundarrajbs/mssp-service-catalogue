@@ -1,5 +1,5 @@
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { SlasPage } from "@/components/slas/SlasPage";
 
 export default function Page() {
-  return <ComingSoon title="SLAs" phase={2} />;
+  return <SlasPage />;
 }

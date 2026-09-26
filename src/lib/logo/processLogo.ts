@@ -1,4 +1,5 @@
 import { MAX_LOGO_DATA_URL_LENGTH } from "@/lib/domain/schema";
+import { detectImageType, type LogoImageType } from "./detectImageType";
 
 export const ACCEPTED_LOGO_TYPES = ["image/png", "image/jpeg", "image/svg+xml"] as const;
 export const MAX_LOGO_BYTES = 500 * 1024;
@@ -19,8 +20,15 @@ export async function processLogoFile(file: File): Promise<string> {
   if (file.size > MAX_LOGO_BYTES) {
     throw new LogoError("The logo must be 500 KB or smaller.");
   }
+  // The declared type can be faked by renaming a file, so check the contents too.
+  const detected = detectImageType(new Uint8Array(await file.arrayBuffer()));
+  const declared: Record<string, LogoImageType> = { "image/png": "png", "image/jpeg": "jpeg", "image/svg+xml": "svg" };
+  if (detected === null || detected !== declared[file.type]) {
+    throw new LogoError("This file isn't a valid PNG, JPG or SVG image.");
+  }
 
-  const url = URL.createObjectURL(file);
+  // Load from a Blob with an explicit image type so an SVG is only ever treated as an image.
+  const url = URL.createObjectURL(new Blob([file], { type: file.type }));
   try {
     const image = await loadImage(url);
     // SVGs without explicit dimensions report 0 × 0; give them a sensible size.

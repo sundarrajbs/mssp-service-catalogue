@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, RotateCcwIcon } from "lucide-react";
+import { KeyboardIcon, PlusIcon, RotateCcwIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -54,6 +54,14 @@ export function TiersPage() {
         </div>
       ) : (
         <>
+          <p className="text-muted-foreground -mt-4 mb-6 flex items-start gap-2 text-sm">
+            <KeyboardIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              Keyboard: Tab to a service, press Space to pick it up, use the arrow keys to move between tiers, then Space
+              to drop (Escape cancels). Or use the + button next to a library service. On an iPad, press and hold to
+              drag.
+            </span>
+          </p>
           <TierBoard services={services} tiers={tiers} onDeleteTier={setPendingDelete} />
           <section className="mt-12" aria-labelledby="comparison-heading">
             <h2 id="comparison-heading" className="mb-1 text-2xl font-semibold tracking-tight">

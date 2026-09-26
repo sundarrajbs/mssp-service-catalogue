@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Don't let zod probe for eval-based speedups: the CSP forbids eval and would report it.
+z.config({ jitless: true });
+
 /**
  * Zod schemas are the single source of truth for the data model.
  * Types are inferred from them (see types.ts) and the same schemas

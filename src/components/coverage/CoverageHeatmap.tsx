@@ -100,7 +100,7 @@ function HeatmapCell({ tierName, coverage }: { tierName: string; coverage: Funct
             style={cellStyle(count)}
             className={cn(
               "flex h-16 w-full cursor-default flex-col items-center justify-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-              isGap && "border-destructive/50 bg-destructive/5 text-destructive border border-dashed",
+              isGap && "border-destructive/50 bg-destructive/5 text-red-700 dark:text-red-400 border border-dashed",
               strongText(count) && "text-brand-foreground",
             )}
           >
@@ -143,7 +143,7 @@ function HeatmapLegend() {
     <div className="text-muted-foreground flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-hidden>
       <span>Included services per function:</span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="border-destructive/50 bg-destructive/5 text-destructive inline-flex h-5 w-8 items-center justify-center rounded border border-dashed">
+        <span className="border-destructive/50 bg-destructive/5 text-red-700 dark:text-red-400 inline-flex h-5 w-8 items-center justify-center rounded border border-dashed">
           <TriangleAlertIcon className="size-3" />
         </span>
         0 (gap)

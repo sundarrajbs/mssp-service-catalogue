@@ -3,19 +3,21 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { useBuilderHref } from "@/components/layout/BuilderContext";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { DAYS_PER_MONTH, priceTier } from "@/lib/domain/pricing";
 import { tierLabel } from "@/lib/domain/types";
 import { formatMoney } from "@/lib/format/currency";
-import { useCatalogueStore } from "@/store/catalogueStore";
+import { useCatalogueActions, useCatalogueStore } from "@/store/catalogueStore";
 import { CostBreakdownTable } from "./CostBreakdownTable";
 import { SizingForm } from "./SizingForm";
 import { TierPriceCard } from "./TierPriceCard";
 
 export function PricingPage() {
+  const href = useBuilderHref();
   const catalogue = useCatalogueStore((s) => s.catalogue);
-  const { updateSizing, updateSettings, updateTier } = useCatalogueStore.getState();
+  const { updateSizing, updateSettings, updateTier } = useCatalogueActions();
   const { services, tiers, sizing, currency } = catalogue;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -43,7 +45,7 @@ export function PricingPage() {
         <div className="text-muted-foreground mt-8 flex flex-col items-center gap-4 rounded-xl border border-dashed p-12 text-center">
           <p>Create tiers first to see their prices.</p>
           <Button asChild>
-            <Link href="/tiers">Go to Tiers</Link>
+            <Link href={href("/tiers")}>Go to Tiers</Link>
           </Button>
         </div>
       ) : (

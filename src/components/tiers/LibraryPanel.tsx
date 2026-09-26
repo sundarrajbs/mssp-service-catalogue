@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PlusIcon, SearchIcon } from "lucide-react";
 
+import { GuardedButton } from "@/components/preview/GuardedButton";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useReadOnly } from "@/store/catalogueStore";
 import { tierLabel, type Inclusion, type Service, type Tier } from "@/lib/domain/types";
 import { DraggableService } from "./DraggableService";
 import { DropZone } from "./DropZone";
@@ -24,16 +26,20 @@ interface LibraryPanelProps {
 }
 
 export function LibraryPanel({ services, tiers, onAddToTier }: LibraryPanelProps) {
+  const readOnly = useReadOnly();
   const [query, setQuery] = useState("");
 
   const tierCount = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const tier of tiers) for (const ts of tier.services) counts.set(ts.serviceId, (counts.get(ts.serviceId) ?? 0) + 1);
+    for (const tier of tiers)
+      for (const ts of tier.services) counts.set(ts.serviceId, (counts.get(ts.serviceId) ?? 0) + 1);
     return counts;
   }, [tiers]);
 
   const q = query.trim().toLowerCase();
-  const visible = services.filter((s) => !q || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
+  const visible = services.filter(
+    (s) => !q || s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q),
+  );
   const groups = [
     { title: "Core services", items: visible.filter((s) => !s.isAddOn) },
     { title: "Add-on services", items: visible.filter((s) => s.isAddOn) },
@@ -50,7 +56,9 @@ export function LibraryPanel({ services, tiers, onAddToTier }: LibraryPanelProps
     >
       <div>
         <h2 className="text-lg font-semibold">Library</h2>
-        <p className="text-muted-foreground text-xs">Drag into a tier, or use + to add.</p>
+        <p className="text-muted-foreground text-xs">
+          {readOnly ? "Services available to add to tiers." : "Drag into a tier, or use + to add."}
+        </p>
       </div>
       <div className="relative">
         <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" aria-hidden />
@@ -77,28 +85,39 @@ export function LibraryPanel({ services, tiers, onAddToTier }: LibraryPanelProps
                 data={{ serviceId: service.id }}
                 hint={count === 0 ? "Not in any tier" : `In ${count} ${count === 1 ? "tier" : "tiers"}`}
                 actions={
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon-sm" aria-label={`Add ${service.name} to a tier`}>
-                        <PlusIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      {tiers.length === 0 && <DropdownMenuLabel>Create a tier first</DropdownMenuLabel>}
-                      {tiers.map((tier, index) => (
-                        <div key={tier.id}>
-                          {index > 0 && <DropdownMenuSeparator />}
-                          <DropdownMenuLabel>{tierLabel(tier)}</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => onAddToTier(tier.id, service.id, "included")}>
-                            Include in tier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => onAddToTier(tier.id, service.id, "addOn")}>
-                            Offer as add-on
-                          </DropdownMenuItem>
-                        </div>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  readOnly ? (
+                    <GuardedButton
+                      variant="ghost"
+                      size="icon-sm"
+                      action="add services to tiers"
+                      aria-label={`Add ${service.name} to a tier`}
+                    >
+                      <PlusIcon />
+                    </GuardedButton>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm" aria-label={`Add ${service.name} to a tier`}>
+                          <PlusIcon />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        {tiers.length === 0 && <DropdownMenuLabel>Create a tier first</DropdownMenuLabel>}
+                        {tiers.map((tier, index) => (
+                          <div key={tier.id}>
+                            {index > 0 && <DropdownMenuSeparator />}
+                            <DropdownMenuLabel>{tierLabel(tier)}</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => onAddToTier(tier.id, service.id, "included")}>
+                              Include in tier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onAddToTier(tier.id, service.id, "addOn")}>
+                              Offer as add-on
+                            </DropdownMenuItem>
+                          </div>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )
                 }
               />
             );

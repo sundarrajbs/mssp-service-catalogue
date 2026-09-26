@@ -15,16 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { GuardedButton } from "@/components/preview/GuardedButton";
 import { Button } from "@/components/ui/button";
 import { tierLabel, type Tier } from "@/lib/domain/types";
-import { useCatalogueStore } from "@/store/catalogueStore";
+import { useCatalogueActions, useCatalogueStore, useReadOnly } from "@/store/catalogueStore";
 import { TierBoard } from "./TierBoard";
 import { TierComparisonMatrix } from "./TierComparisonMatrix";
 
 export function TiersPage() {
   const services = useCatalogueStore((s) => s.catalogue.services);
   const tiers = useCatalogueStore((s) => s.catalogue.tiers);
-  const { addTier, removeTier, restoreDefaultTiers, setTierService } = useCatalogueStore.getState();
+  const { addTier, removeTier, restoreDefaultTiers, setTierService } = useCatalogueActions();
+  const readOnly = useReadOnly();
   const [pendingDelete, setPendingDelete] = useState<Tier | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
 
@@ -32,17 +34,21 @@ export function TiersPage() {
     <>
       <PageHeader
         title="Tiers"
-        description="Package services into tiers. Drag from the library into a tier, or click cells in the comparison below."
+        description={
+          readOnly
+            ? "How services are packaged into tiers, with optional add-ons."
+            : "Package services into tiers. Drag from the library into a tier, or click cells in the comparison below."
+        }
         actions={
           <>
-            <Button variant="outline" onClick={() => setConfirmRestore(true)}>
+            <GuardedButton variant="outline" action="change tiers" onClick={() => setConfirmRestore(true)}>
               <RotateCcwIcon aria-hidden />
               Restore default tiers
-            </Button>
-            <Button onClick={() => addTier(`Tier ${tiers.length + 1}`)}>
+            </GuardedButton>
+            <GuardedButton action="add tiers" onClick={() => addTier(`Tier ${tiers.length + 1}`)}>
               <PlusIcon aria-hidden />
               Add tier
-            </Button>
+            </GuardedButton>
           </>
         }
       />
@@ -54,23 +60,26 @@ export function TiersPage() {
         </div>
       ) : (
         <>
-          <p className="text-muted-foreground -mt-4 mb-6 flex items-start gap-2 text-sm">
-            <KeyboardIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-            <span>
-              Keyboard: Tab to a service, press Space to pick it up, use the arrow keys to move between tiers, then Space
-              to drop (Escape cancels). Or use the + button next to a library service. On an iPad, press and hold to
-              drag.
-            </span>
-          </p>
+          {!readOnly && (
+            <p className="text-muted-foreground -mt-4 mb-6 flex items-start gap-2 text-sm">
+              <KeyboardIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>
+                Keyboard: Tab to a service, press Space to pick it up, use the arrow keys to move between tiers, then
+                Space to drop (Escape cancels). Or use the + button next to a library service. On an iPad, press and
+                hold to drag.
+              </span>
+            </p>
+          )}
           <TierBoard services={services} tiers={tiers} onDeleteTier={setPendingDelete} />
           <section className="mt-12" aria-labelledby="comparison-heading">
             <h2 id="comparison-heading" className="mb-1 text-2xl font-semibold tracking-tight">
               Tier comparison
             </h2>
             <p className="text-muted-foreground mb-5 text-sm">
-              ✓ included · Add-on available at extra cost · — not offered. Click a cell to change it.
+              ✓ included · Add-on available at extra cost · — not offered.
+              {readOnly ? "" : " Click a cell to change it."}
             </p>
-            <TierComparisonMatrix services={services} tiers={tiers} onChange={setTierService} />
+            <TierComparisonMatrix services={services} tiers={tiers} onChange={readOnly ? undefined : setTierService} />
           </section>
         </>
       )}

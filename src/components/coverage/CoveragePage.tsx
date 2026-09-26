@@ -6,12 +6,14 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { coverageGaps, tierCoverage } from "@/lib/domain/coverage";
+import { useBuilderHref } from "@/components/layout/BuilderContext";
 import { useCatalogueStore } from "@/store/catalogueStore";
 import { CoverageHeatmap } from "./CoverageHeatmap";
 import { CoverageRadar } from "./CoverageRadar";
 import { GapList } from "./GapList";
 
 export function CoveragePage() {
+  const href = useBuilderHref();
   const services = useCatalogueStore((s) => s.catalogue.services);
   const tiers = useCatalogueStore((s) => s.catalogue.tiers);
 
@@ -28,7 +30,7 @@ export function CoveragePage() {
         <div className="text-muted-foreground flex flex-col items-center gap-4 rounded-xl border border-dashed p-12 text-center">
           <p>Create tiers first to see their coverage.</p>
           <Button asChild>
-            <Link href="/tiers">Go to Tiers</Link>
+            <Link href={href("/tiers")}>Go to Tiers</Link>
           </Button>
         </div>
       ) : (

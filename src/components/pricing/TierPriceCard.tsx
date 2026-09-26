@@ -6,6 +6,7 @@ import type { TierPricing } from "@/lib/domain/pricing";
 import { tierLabel, type Currency, type Tier } from "@/lib/domain/types";
 import { formatCompactMoney, formatMoney } from "@/lib/format/currency";
 import { cn } from "@/lib/utils";
+import { useReadOnly } from "@/store/catalogueStore";
 
 interface TierPriceCardProps {
   tier: Tier;
@@ -26,6 +27,7 @@ export function TierPriceCard({
   onSelect,
   onMarginChange,
 }: TierPriceCardProps) {
+  const readOnly = useReadOnly();
   const money = (n: number) => formatMoney(n, currency);
   const marginId = `margin-${tier.id}`;
 
@@ -93,10 +95,16 @@ export function TierPriceCard({
       <div className="flex items-end gap-3 border-t pt-4">
         <div className="w-28 space-y-2">
           <Label htmlFor={marginId}>Margin %</Label>
-          <NumberField id={marginId} value={tier.marginPercent} max={1000} onValueChange={onMarginChange} />
+          <NumberField
+            id={marginId}
+            value={tier.marginPercent}
+            max={1000}
+            disabled={readOnly}
+            onValueChange={onMarginChange}
+          />
         </div>
         <p className="text-muted-foreground pb-2 text-xs">
-          Markup on cost
+          {readOnly ? "Sign in to change margins · markup on cost" : "Markup on cost"}
           {pricing.grossMarginPercent !== null && <> · {pricing.grossMarginPercent.toFixed(1)}% of price</>}
         </p>
       </div>

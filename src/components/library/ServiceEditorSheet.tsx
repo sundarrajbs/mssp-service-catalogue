@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { useSignInPrompt } from "@/components/preview/SignInPrompt";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { NIST_FUNCTIONS, PRICING_UNITS, serviceSchema } from "@/lib/domain/schema";
 import { NIST_COLOURS } from "@/lib/domain/nist";
+import { useReadOnly } from "@/store/catalogueStore";
 import { PRICING_UNIT_LABELS, type NistFunction, type PricingUnit, type Service } from "@/lib/domain/types";
 
 export const EMPTY_SERVICE: Omit<Service, "id"> = {
@@ -100,6 +102,8 @@ function ServiceForm({
   onCancel: () => void;
   onSave: ServiceEditorSheetProps["onSave"];
 }) {
+  const readOnly = useReadOnly();
+  const prompt = useSignInPrompt();
   const [draft, setDraft] = useState<Draft>(() => toDraft(service ?? EMPTY_SERVICE));
   const [errors, setErrors] = useState<FieldErrors>({});
   const ids = useId();
@@ -112,6 +116,7 @@ function ServiceForm({
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (readOnly) return;
     const candidate = {
       id: service?.id ?? "new",
       name: draft.name,
@@ -143,11 +148,16 @@ function ServiceForm({
   return (
     <form onSubmit={handleSubmit} className="flex h-full flex-col" noValidate>
       <SheetHeader className="border-b px-6 py-5">
-        <SheetTitle className="text-xl">{service ? "Edit service" : "New service"}</SheetTitle>
-        <SheetDescription>Describe what the customer gets, how it maps to NIST CSF and how it is priced.</SheetDescription>
+        <SheetTitle className="text-xl">{readOnly ? "Service details" : service ? "Edit service" : "New service"}</SheetTitle>
+        <SheetDescription>
+          {readOnly
+            ? "What the customer gets, how it maps to NIST CSF and how it is priced. Sign in to edit."
+            : "Describe what the customer gets, how it maps to NIST CSF and how it is priced."}
+        </SheetDescription>
       </SheetHeader>
 
-      <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+      {/* In the preview every field is disabled; visitors can read but not change. */}
+      <fieldset disabled={readOnly} className="min-w-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
         <div className="space-y-2">
           <Label htmlFor={fieldId("name")}>Name</Label>
           <Input
@@ -285,13 +295,19 @@ function ServiceForm({
           </div>
           <Switch id={fieldId("isAddOn")} checked={draft.isAddOn} onCheckedChange={(v) => update("isAddOn", v)} />
         </div>
-      </div>
+      </fieldset>
 
       <SheetFooter className="flex-row justify-end border-t px-6 py-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {readOnly ? "Close" : "Cancel"}
         </Button>
-        <Button type="submit">{service ? "Save changes" : "Add service"}</Button>
+        {readOnly ? (
+          <Button type="button" onClick={() => prompt("edit services")}>
+            Sign in to edit
+          </Button>
+        ) : (
+          <Button type="submit">{service ? "Save changes" : "Add service"}</Button>
+        )}
       </SheetFooter>
     </form>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { CopyIcon, MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react";
+import { CopyIcon, MoreHorizontalIcon, EyeIcon, LockIcon, PencilIcon, Trash2Icon } from "lucide-react";
 
 import { NistBadges } from "@/components/shared/NistBadges";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +21,11 @@ interface ServiceCardProps {
   onEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  /** Public preview: the menu offers "View details"; the other actions ask the visitor to sign in. */
+  readOnly?: boolean;
 }
 
-export function ServiceCard({ service, currency, onEdit, onDuplicate, onDelete }: ServiceCardProps) {
+export function ServiceCard({ service, currency, onEdit, onDuplicate, onDelete, readOnly = false }: ServiceCardProps) {
   return (
     <article className="bg-card group relative flex flex-col gap-4 rounded-xl border p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
@@ -51,14 +53,16 @@ export function ServiceCard({ service, currency, onEdit, onDuplicate, onDelete }
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={onEdit}>
-              <PencilIcon /> Edit
+              {readOnly ? <EyeIcon /> : <PencilIcon />} {readOnly ? "View details" : "Edit"}
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onDuplicate}>
               <CopyIcon /> Duplicate
+              {readOnly && <LockIcon className="ml-auto" aria-label="Sign in required" />}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={onDelete}>
               <Trash2Icon /> Delete
+              {readOnly && <LockIcon className="ml-auto" aria-label="Sign in required" />}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

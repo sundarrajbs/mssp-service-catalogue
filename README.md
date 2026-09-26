@@ -85,7 +85,7 @@ See [Supabase setup](#supabase-setup) below, then put the project's URL and anon
 
 | Variable | Where | Required | What it is |
 |----------|-------|----------|------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | local and Vercel | yes, for sign-in | Project URL: Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_URL` | local and Vercel | yes, for sign-in | The **project URL**, e.g. `https://abcd.supabase.co`, not the `…/rest/v1` endpoint (Supabase → Project Settings → API) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | local and Vercel | yes, for sign-in | The **anon** or **publishable** key (same page). It's safe to be public: Row Level Security protects the data. |
 | `NEXT_PUBLIC_SITE_URL` | Vercel (Production) | recommended | The site's public URL, e.g. `https://catalogue.example.com`, used in email links. Without it, the request's host is used. |
 | `AUTH_RATE_LIMIT_PEPPER` | Vercel (all environments) | recommended | A long random secret (`openssl rand -hex 32`). It makes the app's rate-limit keys unguessable. Server-only: it has no `NEXT_PUBLIC_` prefix. |
@@ -236,7 +236,7 @@ supabase/
 
 ## Deploying to Vercel from GitHub
 
-1. **Set up Supabase first.** Follow [Supabase setup](#supabase-setup) and note the project URL and anon key.
+1. **Set up Supabase first.** Follow [Supabase setup](#supabase-setup) and note the project URL (just `https://<ref>.supabase.co`, without `/rest/v1`) and the anon key.
 2. **Create the Vercel project.** Sign in at <https://vercel.com> with GitHub, choose **Add New… → Project**, and import `mssp-service-catalogue`. If it isn't listed, use **Adjust GitHub App Permissions**. Vercel detects **Next.js**; leave the build settings at their defaults.
 3. **Add environment variables** before the first deploy, under **Environment Variables** (or later in Project → Settings → Environment Variables):
 

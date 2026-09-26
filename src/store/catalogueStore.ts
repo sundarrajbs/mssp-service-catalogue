@@ -9,6 +9,7 @@ import type { Catalogue, Inclusion, Service, SizingInputs, Sla, Tier } from "@/l
 import { catalogueRepository } from "@/lib/repository";
 import { createSeedCatalogue } from "@/lib/seed/catalogue";
 import { createDefaultTiers } from "@/lib/seed/tiers";
+import { cleanText, sanitizeCatalogue, sanitizeService } from "@/lib/sanitize";
 
 type CatalogueSettings = Pick<Catalogue, "mspName" | "brandColour" | "currency" | "logo">;
 
@@ -55,7 +56,7 @@ export const useCatalogueStore = create<CatalogueState>()(
       catalogue: createSeedCatalogue(),
 
       addService: (input) => {
-        const service: Service = { ...input, id: crypto.randomUUID() };
+        const service: Service = { ...sanitizeService(input), id: crypto.randomUUID() };
         set(({ catalogue }) => ({
           catalogue: touch(catalogue, { services: [...catalogue.services, service] }),
         }));
@@ -65,7 +66,7 @@ export const useCatalogueStore = create<CatalogueState>()(
       updateService: (service) =>
         set(({ catalogue }) => ({
           catalogue: touch(catalogue, {
-            services: catalogue.services.map((s) => (s.id === service.id ? service : s)),
+            services: catalogue.services.map((s) => (s.id === service.id ? sanitizeService(service) : s)),
           }),
         })),
 
@@ -101,7 +102,9 @@ export const useCatalogueStore = create<CatalogueState>()(
       updateTier: (id, changes) =>
         set(({ catalogue }) => ({
           catalogue: touch(catalogue, {
-            tiers: catalogue.tiers.map((t) => (t.id === id ? { ...t, ...changes } : t)),
+            tiers: catalogue.tiers.map((t) =>
+              t.id === id ? { ...t, ...changes, ...(changes.name !== undefined && { name: cleanText(changes.name) }) } : t,
+            ),
           }),
         })),
 
@@ -155,11 +158,16 @@ export const useCatalogueStore = create<CatalogueState>()(
         set(({ catalogue }) => ({ catalogue: touch(catalogue, { sizing: { ...catalogue.sizing, ...changes } }) })),
 
       updateSettings: (settings) =>
-        set(({ catalogue }) => ({ catalogue: touch(catalogue, settings) })),
+        set(({ catalogue }) => ({
+          catalogue: touch(catalogue, {
+            ...settings,
+            ...(settings.mspName !== undefined && { mspName: cleanText(settings.mspName) }),
+          }),
+        })),
 
       resetToDefaults: () => set({ catalogue: createSeedCatalogue() }),
 
-      replaceCatalogue: (catalogue) => set({ catalogue }),
+      replaceCatalogue: (catalogue) => set({ catalogue: sanitizeCatalogue(catalogue) }),
     }),
     {
       name: "catalogue",

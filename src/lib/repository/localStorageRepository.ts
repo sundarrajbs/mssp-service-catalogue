@@ -1,5 +1,6 @@
 import { catalogueSchema } from "@/lib/domain/schema";
 import type { Catalogue } from "@/lib/domain/types";
+import { sanitizeCatalogue } from "@/lib/sanitize";
 import type { CatalogueRepository } from "./CatalogueRepository";
 
 const STORAGE_KEY = "mssp-catalogue-builder:catalogue";
@@ -12,7 +13,8 @@ export class LocalStorageCatalogueRepository implements CatalogueRepository {
     if (!raw) return null;
     try {
       const parsed = catalogueSchema.safeParse(JSON.parse(raw));
-      if (parsed.success) return parsed.data;
+      // Data saved by older versions may predate text sanitising.
+      if (parsed.success) return sanitizeCatalogue(parsed.data);
       console.warn("Saved catalogue failed validation; starting from defaults.", parsed.error);
     } catch (error) {
       console.warn("Saved catalogue is not valid JSON; starting from defaults.", error);

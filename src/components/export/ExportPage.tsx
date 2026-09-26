@@ -48,7 +48,7 @@ export function ExportPage() {
             <CardTitle className="text-lg">PDF documents</CardTitle>
             <CardDescription>
               Uses {catalogue.mspName || "your MSSP"}&apos;s name, logo and brand colour from{" "}
-              <Link href="/settings" className="text-brand underline-offset-4 hover:underline">
+              <Link href="/settings" className="text-brand underline underline-offset-4">
                 Settings
               </Link>
               .
@@ -68,7 +68,7 @@ export function ExportPage() {
             {noTiers && (
               <p className="text-muted-foreground text-sm">
                 Add tiers on the{" "}
-                <Link href="/tiers" className="text-brand underline-offset-4 hover:underline">
+                <Link href="/tiers" className="text-brand underline underline-offset-4">
                   Tiers page
                 </Link>{" "}
                 before exporting.

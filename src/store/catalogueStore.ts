@@ -1,25 +1,22 @@
 "use client";
 
-import { create } from "zustand";
-import { persist, type PersistStorage } from "zustand/middleware";
+import { createContext, useContext } from "react";
+import { createStore, useStore, type StoreApi } from "zustand";
 
-import { CATALOGUE_SCHEMA_VERSION } from "@/lib/domain/schema";
 import { defaultSla } from "@/lib/domain/sla";
 import type { Catalogue, Inclusion, Service, SizingInputs, Sla, Tier } from "@/lib/domain/types";
-import { catalogueRepository } from "@/lib/repository";
 import { createSeedCatalogue } from "@/lib/seed/catalogue";
 import { createDefaultTiers } from "@/lib/seed/tiers";
 import { cleanText, sanitizeCatalogue, sanitizeService } from "@/lib/sanitize";
 
 type CatalogueSettings = Pick<Catalogue, "mspName" | "brandColour" | "currency" | "logo">;
 
-interface CatalogueState {
-  catalogue: Catalogue;
-  addService: (service: Omit<Service, "id">) => Service;
+export interface CatalogueActions {
+  addService: (service: Omit<Service, "id">) => Service | undefined;
   updateService: (service: Service) => void;
   duplicateService: (id: string) => Service | undefined;
   deleteService: (id: string) => void;
-  addTier: (name: string) => Tier;
+  addTier: (name: string) => Tier | undefined;
   updateTier: (id: string, changes: Partial<Pick<Tier, "name" | "marginPercent" | "sla">>) => void;
   removeTier: (id: string) => void;
   moveTier: (id: string, direction: -1 | 1) => void;
@@ -30,31 +27,30 @@ interface CatalogueState {
   updateSizing: (changes: Partial<SizingInputs>) => void;
   updateSettings: (settings: Partial<CatalogueSettings>) => void;
   resetToDefaults: () => void;
-  /** Replaces everything, e.g. after a validated JSON import. */
+  /** Replaces everything, e.g. after a validated JSON import or when switching catalogues. */
   replaceCatalogue: (catalogue: Catalogue) => void;
 }
 
-type PersistedState = Pick<CatalogueState, "catalogue">;
+export interface CatalogueState extends CatalogueActions {
+  catalogue: Catalogue;
+  /** The public preview: nothing that changes the catalogue itself is allowed. */
+  readOnly: boolean;
+}
 
-/** Adapts the repository to Zustand's persist middleware. */
-const repositoryStorage: PersistStorage<PersistedState> = {
-  getItem: async () => {
-    const catalogue = await catalogueRepository.load();
-    return catalogue ? { state: { catalogue }, version: catalogue.schemaVersion } : null;
-  },
-  setItem: async (_name, value) => catalogueRepository.save(value.state.catalogue),
-  removeItem: async () => catalogueRepository.clear(),
-};
+export type CatalogueStore = StoreApi<CatalogueState>;
 
 function touch(catalogue: Catalogue, changes: Partial<Catalogue>): Catalogue {
   return { ...catalogue, ...changes, updatedAt: new Date().toISOString() };
 }
 
-export const useCatalogueStore = create<CatalogueState>()(
-  persist(
-    (set, get) => ({
-      catalogue: createSeedCatalogue(),
-
+/**
+ * Creates an independent store. Each area of the app (the signed-in builder,
+ * the public preview) gets its own, so the preview can never see or change a
+ * user's real catalogue. Saving is handled by whoever owns the store.
+ */
+export function createCatalogueStore({ catalogue, readOnly = false }: { catalogue: Catalogue; readOnly?: boolean }) {
+  return createStore<CatalogueState>()((set, get) => {
+    const actions: CatalogueActions = {
       addService: (input) => {
         const service: Service = { ...sanitizeService(input), id: crypto.randomUUID() };
         set(({ catalogue }) => ({
@@ -152,7 +148,7 @@ export const useCatalogueStore = create<CatalogueState>()(
           }),
         })),
 
-      updateTierSla: (tierId, sla) => get().updateTier(tierId, { sla }),
+      updateTierSla: (tierId, sla) => actions.updateTier(tierId, { sla }),
 
       updateSizing: (changes) =>
         set(({ catalogue }) => ({ catalogue: touch(catalogue, { sizing: { ...catalogue.sizing, ...changes } }) })),
@@ -165,17 +161,75 @@ export const useCatalogueStore = create<CatalogueState>()(
           }),
         })),
 
-      resetToDefaults: () => set({ catalogue: createSeedCatalogue() }),
+      // Resetting or importing changes the contents, not which saved catalogue this is.
+      resetToDefaults: () =>
+        set(({ catalogue }) => ({
+          catalogue: { ...createSeedCatalogue(), id: catalogue.id, createdAt: catalogue.createdAt },
+        })),
 
-      replaceCatalogue: (catalogue) => set({ catalogue: sanitizeCatalogue(catalogue) }),
-    }),
-    {
-      name: "catalogue",
-      version: CATALOGUE_SCHEMA_VERSION,
-      storage: repositoryStorage,
-      partialize: (state) => ({ catalogue: state.catalogue }),
-      // Hydrated explicitly on the client (see StoreHydration) to avoid SSR mismatches.
-      skipHydration: true,
+      replaceCatalogue: (incoming) =>
+        set(({ catalogue }) => ({
+          catalogue: touch(sanitizeCatalogue(incoming), { id: catalogue.id, createdAt: catalogue.createdAt }),
+        })),
+    };
+
+    return {
+      catalogue,
+      readOnly,
+      ...(readOnly ? readOnlyActions(actions) : actions),
+    };
+  });
+}
+
+/**
+ * Defence in depth behind the preview's disabled controls: every action that
+ * changes the catalogue does nothing. Visitors may still try different sizing
+ * and currency, which only affects prices shown on screen and is never saved.
+ */
+function readOnlyActions(actions: CatalogueActions): CatalogueActions {
+  const noop = () => undefined;
+  return {
+    addService: noop,
+    updateService: noop,
+    duplicateService: noop,
+    deleteService: noop,
+    addTier: noop,
+    updateTier: noop,
+    removeTier: noop,
+    moveTier: noop,
+    restoreDefaultTiers: noop,
+    setTierService: noop,
+    updateTierSla: noop,
+    updateSizing: actions.updateSizing,
+    updateSettings: (settings) => {
+      if (settings.currency !== undefined) actions.updateSettings({ currency: settings.currency });
     },
-  ),
-);
+    resetToDefaults: noop,
+    replaceCatalogue: noop,
+  };
+}
+
+const CatalogueStoreContext = createContext<CatalogueStore | null>(null);
+
+export const CatalogueStoreProvider = CatalogueStoreContext.Provider;
+
+export function useCatalogueStoreApi(): CatalogueStore {
+  const store = useContext(CatalogueStoreContext);
+  if (!store) throw new Error("useCatalogueStore must be used inside a CatalogueStoreProvider");
+  return store;
+}
+
+/** Reads from the nearest catalogue store, e.g. `useCatalogueStore((s) => s.catalogue.tiers)`. */
+export function useCatalogueStore<T>(selector: (state: CatalogueState) => T): T {
+  return useStore(useCatalogueStoreApi(), selector);
+}
+
+/** The store's actions. They never change, so this doesn't cause re-renders. */
+export function useCatalogueActions(): CatalogueActions {
+  return useCatalogueStoreApi().getState();
+}
+
+/** True in the public preview. */
+export function useReadOnly(): boolean {
+  return useCatalogueStore((s) => s.readOnly);
+}

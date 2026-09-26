@@ -1,7 +1,4 @@
-import { z } from "zod";
-
-// Don't let zod probe for eval-based speedups: the CSP forbids eval and would report it.
-z.config({ jitless: true });
+import { z } from "@/lib/zod";
 
 /**
  * Zod schemas are the single source of truth for the data model.

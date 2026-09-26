@@ -27,6 +27,18 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    // Builder pages moved under /app when sign-in was added.
+    return ["library", "tiers", "slas", "pricing", "coverage", "export", "settings"].map((page) => ({
+      source: `/${page}`,
+      destination: `/app/${page}`,
+      permanent: true,
+    }));
+  },
+  experimental: {
+    // Room for a catalogue with a logo (up to 1 MB) when saving through a server action.
+    serverActions: { bodySizeLimit: "2mb" },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

@@ -3,32 +3,64 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalculatorIcon,
   DownloadIcon,
   GaugeIcon,
-  CalculatorIcon,
   LayersIcon,
   LibraryIcon,
+  LockIcon,
   RadarIcon,
   SettingsIcon,
+  type LucideIcon,
 } from "lucide-react";
 
+import { useSignInPrompt } from "@/components/preview/SignInPrompt";
 import { cn } from "@/lib/utils";
 import { useCatalogueStore } from "@/store/catalogueStore";
+import { useBuilder } from "./BuilderContext";
 import { ThemeToggle } from "./ThemeToggle";
 
-const NAV_ITEMS = [
-  { href: "/library", label: "Library", icon: LibraryIcon },
-  { href: "/tiers", label: "Tiers", icon: LayersIcon },
-  { href: "/slas", label: "SLAs", icon: GaugeIcon },
-  { href: "/pricing", label: "Pricing", icon: CalculatorIcon },
-  { href: "/coverage", label: "Coverage", icon: RadarIcon },
-  { href: "/export", label: "Export", icon: DownloadIcon },
+interface NavItem {
+  path: string;
+  label: string;
+  icon: LucideIcon;
+  /** Not available in the public preview: shown locked, opens the sign-in prompt. */
+  signedInOnly?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { path: "/library", label: "Library", icon: LibraryIcon },
+  { path: "/tiers", label: "Tiers", icon: LayersIcon },
+  { path: "/slas", label: "SLAs", icon: GaugeIcon },
+  { path: "/pricing", label: "Pricing", icon: CalculatorIcon },
+  { path: "/coverage", label: "Coverage", icon: RadarIcon },
+  { path: "/export", label: "Export", icon: DownloadIcon, signedInOnly: true },
 ];
 
-type NavItem = (typeof NAV_ITEMS)[number] & { onNavigate?: () => void };
+const itemClass =
+  "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-[15px] font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
-function NavLink({ href, label, icon: Icon, onNavigate }: NavItem) {
+function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { basePath, mode } = useBuilder();
+  const prompt = useSignInPrompt();
+  const Icon = item.icon;
+
+  if (mode === "preview" && item.signedInOnly) {
+    return (
+      <button
+        type="button"
+        onClick={() => prompt(item.label.toLowerCase() === "export" ? "export PDFs and JSON" : "change settings")}
+        className={cn(itemClass, "text-muted-foreground hover:bg-accent cursor-pointer")}
+      >
+        <Icon className="size-4.5" aria-hidden />
+        {item.label}
+        <LockIcon className="ml-auto size-3.5" aria-label="Sign in required" />
+      </button>
+    );
+  }
+
+  const href = `${basePath}${item.path}`;
   const active = pathname === href || pathname.startsWith(`${href}/`);
   return (
     <Link
@@ -36,34 +68,48 @@ function NavLink({ href, label, icon: Icon, onNavigate }: NavItem) {
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        itemClass,
         active
           ? "bg-brand-soft text-foreground shadow-[inset_3px_0_0_var(--brand)]"
           : "text-sidebar-foreground hover:bg-accent hover:text-accent-foreground",
       )}
     >
       <Icon className={cn("size-4.5", active && "text-brand")} aria-hidden />
-      {label}
+      {item.label}
     </Link>
   );
 }
 
+export interface SidebarSlots {
+  /** Extra content under the brand, e.g. the catalogue switcher. */
+  header?: React.ReactNode;
+  /** Extra footer links, e.g. Account and Sign out, or Sign in in the preview. */
+  footer?: React.ReactNode;
+}
+
 /** Brand, navigation and theme toggle: shared by the desktop sidebar and the tablet menu. */
-export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarContent({ onNavigate, header, footer }: SidebarSlots & { onNavigate?: () => void }) {
+  const { mode } = useBuilder();
   return (
     <>
-      <div className="px-5 py-6">
+      <div className="space-y-4 px-5 py-6">
         <BrandMark />
+        {header}
       </div>
       <nav aria-label="Main" className="flex flex-1 flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} {...item} onNavigate={onNavigate} />
+          <NavLink key={item.path} item={item} onNavigate={onNavigate} />
         ))}
       </nav>
       <div className="border-sidebar-border flex flex-col gap-1 border-t p-3">
-        <NavLink href="/settings" label="Settings" icon={SettingsIcon} onNavigate={onNavigate} />
+        <NavLink
+          item={{ path: "/settings", label: "Settings", icon: SettingsIcon, signedInOnly: true }}
+          onNavigate={onNavigate}
+        />
+        {footer}
         <ThemeToggle />
       </div>
+      {mode === "preview" && <span className="sr-only">Preview mode</span>}
     </>
   );
 }
@@ -95,10 +141,10 @@ export function BrandMark() {
 }
 
 /** Fixed sidebar on laptop and projector screens (lg and up). */
-export function AppSidebar() {
+export function AppSidebar(slots: SidebarSlots) {
   return (
     <aside className="bg-sidebar border-sidebar-border sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto border-r lg:flex">
-      <SidebarContent />
+      <SidebarContent {...slots} />
     </aside>
   );
 }

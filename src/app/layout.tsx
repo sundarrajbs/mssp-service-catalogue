@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { headers } from "next/headers";
 
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { BrandAccent } from "@/components/layout/BrandAccent";
-import { MobileNav } from "@/components/layout/MobileNav";
-import { StoreHydration } from "@/components/layout/StoreHydration";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -23,7 +19,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full lg:flex">
+      <body className="min-h-full">
         <a
           href="#main"
           className="bg-primary text-primary-foreground sr-only z-50 rounded-md px-4 py-2 font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -31,16 +27,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           Skip to main content
         </a>
         <ThemeProvider nonce={nonce}>
-          <BrandAccent />
-          <AppSidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <MobileNav />
-            <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-5 py-8 outline-none sm:px-6 lg:px-10 lg:py-10">
-              <div className="mx-auto max-w-7xl">
-                <StoreHydration>{children}</StoreHydration>
-              </div>
-            </main>
-          </div>
+          {children}
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>

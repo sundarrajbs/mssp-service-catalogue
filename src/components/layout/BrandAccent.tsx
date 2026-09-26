@@ -13,6 +13,11 @@ export function BrandAccent() {
     const root = document.documentElement;
     root.style.setProperty("--brand", brandColour);
     root.style.setProperty("--brand-foreground", readableTextColour(brandColour));
+    // Back to the default accent when leaving the builder (e.g. to the landing page).
+    return () => {
+      root.style.removeProperty("--brand");
+      root.style.removeProperty("--brand-foreground");
+    };
   }, [brandColour]);
 
   return null;

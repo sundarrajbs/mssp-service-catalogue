@@ -5,6 +5,8 @@ import { PlusIcon, SearchIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { GuardedButton } from "@/components/preview/GuardedButton";
+import { useSignInPrompt } from "@/components/preview/SignInPrompt";
 import { ResetDefaultsButton } from "@/components/shared/ResetDefaultsButton";
 import {
   AlertDialog,
@@ -16,11 +18,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Service } from "@/lib/domain/types";
-import { useCatalogueStore } from "@/store/catalogueStore";
+import { useCatalogueActions, useCatalogueStore, useReadOnly } from "@/store/catalogueStore";
 import { ServiceCard } from "./ServiceCard";
 import { ServiceEditorSheet } from "./ServiceEditorSheet";
 
@@ -29,7 +30,9 @@ const ALL_CATEGORIES = "__all__";
 export function ServiceLibrary() {
   const services = useCatalogueStore((s) => s.catalogue.services);
   const currency = useCatalogueStore((s) => s.catalogue.currency);
-  const { addService, updateService, duplicateService, deleteService } = useCatalogueStore.getState();
+  const { addService, updateService, duplicateService, deleteService } = useCatalogueActions();
+  const readOnly = useReadOnly();
+  const prompt = useSignInPrompt();
 
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(ALL_CATEGORIES);
@@ -59,10 +62,10 @@ export function ServiceLibrary() {
         actions={
           <>
             <ResetDefaultsButton />
-            <Button onClick={() => setEditing(null)}>
+            <GuardedButton action="add services" onClick={() => setEditing(null)}>
               <PlusIcon aria-hidden />
               Add service
-            </Button>
+            </GuardedButton>
           </>
         }
       />
@@ -109,11 +112,13 @@ export function ServiceLibrary() {
               service={service}
               currency={currency}
               onEdit={() => setEditing(service)}
+              readOnly={readOnly}
               onDuplicate={() => {
+                if (readOnly) return prompt("duplicate services");
                 const copy = duplicateService(service.id);
                 if (copy) toast.success(`Duplicated as “${copy.name}”`);
               }}
-              onDelete={() => setPendingDelete(service)}
+              onDelete={() => (readOnly ? prompt("delete services") : setPendingDelete(service))}
             />
           ))}
         </div>

@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useBuilderHref } from "@/components/layout/BuilderContext";
 import { useCatalogueStore } from "@/store/catalogueStore";
 import { JsonImportExport } from "./JsonImportExport";
 import type { PdfKind } from "./pdf/generate";
 
 export function ExportPage() {
+  const href = useBuilderHref();
   const catalogue = useCatalogueStore((s) => s.catalogue);
   const [includePricing, setIncludePricing] = useState(false);
   const [busy, setBusy] = useState<PdfKind | null>(null);
@@ -48,7 +50,7 @@ export function ExportPage() {
             <CardTitle className="text-lg">PDF documents</CardTitle>
             <CardDescription>
               Uses {catalogue.mspName || "your MSSP"}&apos;s name, logo and brand colour from{" "}
-              <Link href="/settings" className="text-brand underline underline-offset-4">
+              <Link href={href("/settings")} className="text-brand underline underline-offset-4">
                 Settings
               </Link>
               .
@@ -68,7 +70,7 @@ export function ExportPage() {
             {noTiers && (
               <p className="text-muted-foreground text-sm">
                 Add tiers on the{" "}
-                <Link href="/tiers" className="text-brand underline underline-offset-4">
+                <Link href={href("/tiers")} className="text-brand underline underline-offset-4">
                   Tiers page
                 </Link>{" "}
                 before exporting.

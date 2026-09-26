@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 import { catalogueSchema } from "./schema";
 import type { Catalogue } from "./types";
@@ -82,6 +82,14 @@ export function parseCatalogueJson(text: string): ImportResult {
       errors: [`This file uses catalogue format version ${String(data.schemaVersion)}, which this app can't read.`],
     };
   }
+  return validateCatalogue(data);
+}
+
+/**
+ * Full validation of catalogue data (schema plus cross-references), used for
+ * imports and before every save to the database.
+ */
+export function validateCatalogue(data: unknown): ImportResult {
   const parsed = importSchema.safeParse(data);
   return parsed.success ? { ok: true, catalogue: parsed.data } : { ok: false, errors: describeIssues(parsed.error) };
 }

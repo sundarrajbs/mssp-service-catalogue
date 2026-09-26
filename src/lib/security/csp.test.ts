@@ -25,6 +25,17 @@ describe("buildCsp", () => {
     expect(directive(csp, "base-uri")).toEqual(["'self'"]);
   });
 
+  it("allows the Supabase project origin for connections only", () => {
+    const withSupabase = buildCsp("n", false, { supabaseUrl: "https://abcd.supabase.co/" });
+    expect(directive(withSupabase, "connect-src")).toEqual(["'self'", "data:", "blob:", "https://abcd.supabase.co"]);
+    expect(directive(withSupabase, "script-src")).not.toContain("https://abcd.supabase.co");
+  });
+
+  it("ignores a malformed Supabase URL", () => {
+    expect(buildCsp("n", false, { supabaseUrl: "javascript:alert(1); script-src *" })).not.toContain("script-src *");
+    expect(buildCsp("n", false, { supabaseUrl: "not a url" })).toBe(buildCsp("n", false));
+  });
+
   it("allows no third-party origins", () => {
     expect(csp).not.toMatch(/https?:/);
   });

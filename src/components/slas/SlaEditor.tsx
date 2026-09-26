@@ -18,6 +18,7 @@ import {
   type Tier,
 } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
+import { useReadOnly } from "@/store/catalogueStore";
 
 const COVERAGE_LABELS: Record<CoverageHours, string> = {
   "8x5": "8×5 (business hours)",
@@ -45,6 +46,7 @@ const PRESETS: { value: SlaPreset; label: string }[] = [
 ];
 
 export function SlaEditor({ tier, onChange }: { tier: Tier; onChange: (sla: Sla) => void }) {
+  const readOnly = useReadOnly();
   const { sla } = tier;
   const issues = validateSla(sla);
   const errors = issues.filter((i) => i.level === "error");
@@ -58,7 +60,10 @@ export function SlaEditor({ tier, onChange }: { tier: Tier; onChange: (sla: Sla)
     const value = raw === "" ? 0 : Math.max(0, Number(raw));
     onChange({
       ...sla,
-      severities: { ...sla.severities, [severity]: { ...sla.severities[severity], [field]: Number.isFinite(value) ? value : 0 } },
+      severities: {
+        ...sla.severities,
+        [severity]: { ...sla.severities[severity], [field]: Number.isFinite(value) ? value : 0 },
+      },
     });
   };
 
@@ -66,7 +71,7 @@ export function SlaEditor({ tier, onChange }: { tier: Tier; onChange: (sla: Sla)
     <Card className="gap-5">
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle className="text-xl">{tierLabel(tier)}</CardTitle>
-        <Select value="" onValueChange={(preset) => onChange(defaultSla(preset as SlaPreset))}>
+        <Select value="" disabled={readOnly} onValueChange={(preset) => onChange(defaultSla(preset as SlaPreset))}>
           <SelectTrigger size="sm" aria-label={`Apply preset SLA to ${tierLabel(tier)}`}>
             <SelectValue placeholder="Apply preset…" />
           </SelectTrigger>
@@ -79,121 +84,130 @@ export function SlaEditor({ tier, onChange }: { tier: Tier; onChange: (sla: Sla)
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor={`${idBase}-coverage`}>Coverage hours</Label>
-            <Select value={sla.coverage} onValueChange={(v) => onChange({ ...sla, coverage: v as CoverageHours })}>
-              <SelectTrigger id={`${idBase}-coverage`} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COVERAGE_HOURS.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {COVERAGE_LABELS[c]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <CardContent>
+        {/* Every field is disabled in the read-only preview. */}
+        <fieldset disabled={readOnly} className="min-w-0 space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={`${idBase}-coverage`}>Coverage hours</Label>
+              <Select value={sla.coverage} onValueChange={(v) => onChange({ ...sla, coverage: v as CoverageHours })}>
+                <SelectTrigger id={`${idBase}-coverage`} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COVERAGE_HOURS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {COVERAGE_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`${idBase}-cadence`}>Reporting cadence</Label>
+              <Select
+                value={sla.reportingCadence}
+                onValueChange={(v) => onChange({ ...sla, reportingCadence: v as ReportingCadence })}
+              >
+                <SelectTrigger id={`${idBase}-cadence`} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {REPORTING_CADENCES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {CADENCE_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${idBase}-cadence`}>Reporting cadence</Label>
-            <Select
-              value={sla.reportingCadence}
-              onValueChange={(v) => onChange({ ...sla, reportingCadence: v as ReportingCadence })}
-            >
-              <SelectTrigger id={`${idBase}-cadence`} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {REPORTING_CADENCES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {CADENCE_LABELS[c]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          <table className="w-full text-sm">
+            <caption className="sr-only">Severity targets for {tierLabel(tier)}</caption>
+            <thead>
+              <tr className="text-muted-foreground text-left text-xs">
+                <th scope="col" className="pb-2 font-medium">
+                  Severity
+                </th>
+                <th scope="col" className="pb-2 font-medium">
+                  Response (minutes)
+                </th>
+                <th scope="col" className="pb-2 pl-3 font-medium">
+                  Resolution (hours)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {SEVERITIES.map((severity) => {
+                const target = sla.severities[severity];
+                return (
+                  <tr key={severity} className="border-t">
+                    <th scope="row" className="py-2 pr-3 text-left align-top font-medium">
+                      <span className="block">{severity}</span>
+                      <span className="text-muted-foreground text-xs font-normal">{SEVERITY_LABELS[severity]}</span>
+                    </th>
+                    <td className="py-2 align-top">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        aria-label={`${severity} response time in minutes`}
+                        value={target.responseMinutes || ""}
+                        aria-invalid={hasIssue(severity, "responseMinutes")}
+                        onChange={(e) => setTarget(severity, "responseMinutes", e.target.value)}
+                      />
+                      <span className="text-muted-foreground mt-1 block text-xs">
+                        {target.responseMinutes > 0 ? formatMinutes(target.responseMinutes) : "—"}
+                      </span>
+                    </td>
+                    <td className="py-2 pl-3 align-top">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        aria-label={`${severity} resolution target in hours`}
+                        value={target.resolutionHours || ""}
+                        aria-invalid={hasIssue(severity, "resolutionHours")}
+                        onChange={(e) => setTarget(severity, "resolutionHours", e.target.value)}
+                      />
+                      <span className="text-muted-foreground mt-1 block text-xs">
+                        {target.resolutionHours > 0 ? formatHours(target.resolutionHours) : "—"}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <div aria-live="polite" className="space-y-1.5 text-sm">
+            {issues.length === 0 && (
+              <p className="text-muted-foreground flex items-center gap-2">
+                <CircleCheckIcon className="size-4 text-emerald-600" aria-hidden /> Targets look consistent.
+              </p>
+            )}
+            {[...errors, ...warnings].map((issue) => (
+              <p
+                key={issue.message}
+                className={cn(
+                  "flex items-start gap-2",
+                  issue.level === "error" ? "text-destructive" : "text-amber-700 dark:text-amber-400",
+                )}
+              >
+                {issue.level === "error" ? (
+                  <CircleAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                ) : (
+                  <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                )}
+                <span>
+                  <span className="sr-only">{issue.level === "error" ? "Error: " : "Warning: "}</span>
+                  {issue.message}
+                </span>
+              </p>
+            ))}
           </div>
-        </div>
-
-        <table className="w-full text-sm">
-          <caption className="sr-only">Severity targets for {tierLabel(tier)}</caption>
-          <thead>
-            <tr className="text-muted-foreground text-left text-xs">
-              <th scope="col" className="pb-2 font-medium">Severity</th>
-              <th scope="col" className="pb-2 font-medium">Response (minutes)</th>
-              <th scope="col" className="pb-2 pl-3 font-medium">Resolution (hours)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SEVERITIES.map((severity) => {
-              const target = sla.severities[severity];
-              return (
-                <tr key={severity} className="border-t">
-                  <th scope="row" className="py-2 pr-3 text-left align-top font-medium">
-                    <span className="block">{severity}</span>
-                    <span className="text-muted-foreground text-xs font-normal">{SEVERITY_LABELS[severity]}</span>
-                  </th>
-                  <td className="py-2 align-top">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      aria-label={`${severity} response time in minutes`}
-                      value={target.responseMinutes || ""}
-                      aria-invalid={hasIssue(severity, "responseMinutes")}
-                      onChange={(e) => setTarget(severity, "responseMinutes", e.target.value)}
-                    />
-                    <span className="text-muted-foreground mt-1 block text-xs">
-                      {target.responseMinutes > 0 ? formatMinutes(target.responseMinutes) : "—"}
-                    </span>
-                  </td>
-                  <td className="py-2 pl-3 align-top">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      aria-label={`${severity} resolution target in hours`}
-                      value={target.resolutionHours || ""}
-                      aria-invalid={hasIssue(severity, "resolutionHours")}
-                      onChange={(e) => setTarget(severity, "resolutionHours", e.target.value)}
-                    />
-                    <span className="text-muted-foreground mt-1 block text-xs">
-                      {target.resolutionHours > 0 ? formatHours(target.resolutionHours) : "—"}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        <div aria-live="polite" className="space-y-1.5 text-sm">
-          {issues.length === 0 && (
-            <p className="text-muted-foreground flex items-center gap-2">
-              <CircleCheckIcon className="size-4 text-emerald-600" aria-hidden /> Targets look consistent.
-            </p>
-          )}
-          {[...errors, ...warnings].map((issue) => (
-            <p
-              key={issue.message}
-              className={cn(
-                "flex items-start gap-2",
-                issue.level === "error" ? "text-destructive" : "text-amber-700 dark:text-amber-400",
-              )}
-            >
-              {issue.level === "error" ? (
-                <CircleAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-              ) : (
-                <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-              )}
-              <span>
-                <span className="sr-only">{issue.level === "error" ? "Error: " : "Warning: "}</span>
-                {issue.message}
-              </span>
-            </p>
-          ))}
-        </div>
+        </fieldset>
       </CardContent>
     </Card>
   );

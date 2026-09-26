@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { INCLUSION_LABELS, tierLabel, type Inclusion, type Service, type Tier } from "@/lib/domain/types";
-import { useCatalogueStore } from "@/store/catalogueStore";
+import { useCatalogueActions } from "@/store/catalogueStore";
 import { ServiceDragPreview, type DragData } from "./DraggableService";
 import type { DropData } from "./DropZone";
 import { zoneKeyboardCoordinates } from "./keyboardCoordinates";
@@ -30,7 +30,7 @@ interface TierBoardProps {
 }
 
 export function TierBoard({ services, tiers, onDeleteTier }: TierBoardProps) {
-  const { setTierService, updateTier, moveTier } = useCatalogueStore.getState();
+  const { setTierService, updateTier, moveTier } = useCatalogueActions();
   const [activeServiceId, setActiveServiceId] = useState<string | null>(null);
 
   const servicesById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services]);

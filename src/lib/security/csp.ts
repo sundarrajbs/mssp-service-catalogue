@@ -8,15 +8,18 @@
  * - Styles allow 'unsafe-inline' because the toast, Radix and chart libraries
  *   inject inline styles. Inline styles cannot execute code.
  * - data:/blob: images cover the uploaded logo and generated PDF downloads.
+ * - The Supabase project origin is allowed for connections. Today all Supabase
+ *   calls happen on the server, but this keeps the policy ready for client features.
  */
-export function buildCsp(nonce: string, isDev: boolean): string {
+export function buildCsp(nonce: string, isDev: boolean, options: { supabaseUrl?: string } = {}): string {
+  const supabaseOrigin = options.supabaseUrl ? safeOrigin(options.supabaseUrl) : null;
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", ...(isDev ? ["'unsafe-eval'"] : [])],
     "style-src": ["'self'", "'unsafe-inline'"],
     "img-src": ["'self'", "data:", "blob:"],
     "font-src": ["'self'", "data:"],
-    "connect-src": ["'self'", "data:", "blob:"],
+    "connect-src": ["'self'", "data:", "blob:", ...(supabaseOrigin ? [supabaseOrigin] : [])],
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
@@ -32,4 +35,14 @@ export function buildCsp(nonce: string, isDev: boolean): string {
 /** A fresh, unguessable nonce for each request. */
 export function createNonce(): string {
   return btoa(crypto.randomUUID());
+}
+
+/** Just the origin, and only for http(s) URLs, so nothing else can be smuggled into the policy. */
+function safeOrigin(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.origin : null;
+  } catch {
+    return null;
+  }
 }

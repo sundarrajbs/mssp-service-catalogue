@@ -1,5 +1,5 @@
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { CoveragePage } from "@/components/coverage/CoveragePage";
 
 export default function Page() {
-  return <ComingSoon title="Coverage" phase={4} />;
+  return <CoveragePage />;
 }

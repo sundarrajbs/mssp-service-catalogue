@@ -54,7 +54,7 @@ export function AppSidebar() {
       <div className="flex items-center gap-3 px-5 py-6">
         {logo ? (
           // eslint-disable-next-line @next/next/no-img-element -- data URL logo, not optimisable
-          <img src={logo} alt="" className="size-9 rounded-md object-contain" />
+          <img src={logo} alt="" className="h-9 w-auto max-w-24 shrink-0 rounded-md object-contain" />
         ) : (
           <div className="bg-brand text-brand-foreground flex size-9 items-center justify-center rounded-md text-sm font-semibold">
             {mspName.trim().charAt(0).toUpperCase() || "M"}

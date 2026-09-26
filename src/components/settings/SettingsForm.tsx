@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCatalogueStore } from "@/store/catalogueStore";
+import { LogoField } from "./LogoField";
 
 const HEX_COLOUR = /^#[0-9a-fA-F]{6}$/;
 
@@ -24,7 +25,7 @@ export function SettingsForm() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Branding</CardTitle>
-            <CardDescription>The brand colour is used as the accent throughout the app.</CardDescription>
+            <CardDescription>Your logo and brand colour appear in the app and on exported PDFs.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -36,6 +37,7 @@ export function SettingsForm() {
                 onChange={(e) => updateSettings({ mspName: e.target.value })}
               />
             </div>
+            <LogoField />
             {/* Keyed by catalogue so the text box resets after "Reset to defaults" or an import. */}
             <BrandColourField key={catalogueId} />
           </CardContent>

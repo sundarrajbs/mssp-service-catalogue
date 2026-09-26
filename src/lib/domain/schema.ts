@@ -16,6 +16,10 @@ export const INCLUSIONS = ["included", "addOn"] as const;
 
 export const CATALOGUE_SCHEMA_VERSION = 1;
 
+/** Logos are stored as PNG or JPEG data URLs (SVGs are rasterised on upload). */
+export const MAX_LOGO_DATA_URL_LENGTH = 1_000_000;
+const LOGO_DATA_URL = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/;
+
 const text = (max: number) => z.string().trim().max(max);
 const nonNegative = z.number().finite().min(0);
 
@@ -72,7 +76,11 @@ export const catalogueSchema = z.object({
   id: z.string().min(1),
   schemaVersion: z.literal(CATALOGUE_SCHEMA_VERSION),
   mspName: text(120),
-  logo: z.string().optional(),
+  logo: z
+    .string()
+    .max(MAX_LOGO_DATA_URL_LENGTH, "Logo image is too large")
+    .regex(LOGO_DATA_URL, "Logo must be a PNG or JPEG image")
+    .optional(),
   brandColour: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Brand colour must be a hex colour like #2563eb"),
   currency: z.enum(CURRENCIES),
   services: z.array(serviceSchema),

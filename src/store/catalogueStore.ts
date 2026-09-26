@@ -29,6 +29,8 @@ interface CatalogueState {
   updateSizing: (changes: Partial<SizingInputs>) => void;
   updateSettings: (settings: Partial<CatalogueSettings>) => void;
   resetToDefaults: () => void;
+  /** Replaces everything, e.g. after a validated JSON import. */
+  replaceCatalogue: (catalogue: Catalogue) => void;
 }
 
 type PersistedState = Pick<CatalogueState, "catalogue">;
@@ -156,6 +158,8 @@ export const useCatalogueStore = create<CatalogueState>()(
         set(({ catalogue }) => ({ catalogue: touch(catalogue, settings) })),
 
       resetToDefaults: () => set({ catalogue: createSeedCatalogue() }),
+
+      replaceCatalogue: (catalogue) => set({ catalogue }),
     }),
     {
       name: "catalogue",

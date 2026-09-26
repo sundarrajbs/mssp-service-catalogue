@@ -5,7 +5,7 @@ import { persist, type PersistStorage } from "zustand/middleware";
 
 import { CATALOGUE_SCHEMA_VERSION } from "@/lib/domain/schema";
 import { defaultSla } from "@/lib/domain/sla";
-import type { Catalogue, Inclusion, Service, Sla, Tier } from "@/lib/domain/types";
+import type { Catalogue, Inclusion, Service, SizingInputs, Sla, Tier } from "@/lib/domain/types";
 import { catalogueRepository } from "@/lib/repository";
 import { createSeedCatalogue } from "@/lib/seed/catalogue";
 import { createDefaultTiers } from "@/lib/seed/tiers";
@@ -26,6 +26,7 @@ interface CatalogueState {
   /** Adds, moves or re-classifies a service in a tier; `null` removes it. */
   setTierService: (tierId: string, serviceId: string, inclusion: Inclusion | null) => void;
   updateTierSla: (tierId: string, sla: Sla) => void;
+  updateSizing: (changes: Partial<SizingInputs>) => void;
   updateSettings: (settings: Partial<CatalogueSettings>) => void;
   resetToDefaults: () => void;
 }
@@ -147,6 +148,9 @@ export const useCatalogueStore = create<CatalogueState>()(
         })),
 
       updateTierSla: (tierId, sla) => get().updateTier(tierId, { sla }),
+
+      updateSizing: (changes) =>
+        set(({ catalogue }) => ({ catalogue: touch(catalogue, { sizing: { ...catalogue.sizing, ...changes } }) })),
 
       updateSettings: (settings) =>
         set(({ catalogue }) => ({ catalogue: touch(catalogue, settings) })),

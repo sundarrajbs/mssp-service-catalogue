@@ -24,7 +24,7 @@ interface NavItem {
   path: string;
   label: string;
   icon: LucideIcon;
-  /** Not available in the public preview: shown locked, opens the sign-in prompt. */
+  /** Not available in the public preview: shown locked, opens the "start building" prompt. */
   signedInOnly?: boolean;
 }
 
@@ -55,7 +55,7 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
       >
         <Icon className="size-4.5" aria-hidden />
         {item.label}
-        <LockIcon className="ml-auto size-3.5" aria-label="Sign in required" />
+        <LockIcon className="ml-auto size-3.5" aria-label="Not available in the preview" />
       </button>
     );
   }

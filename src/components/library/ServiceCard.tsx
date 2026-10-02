@@ -57,12 +57,12 @@ export function ServiceCard({ service, currency, onEdit, onDuplicate, onDelete, 
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={onDuplicate}>
               <CopyIcon /> Duplicate
-              {readOnly && <LockIcon className="ml-auto" aria-label="Sign in required" />}
+              {readOnly && <LockIcon className="ml-auto" aria-label="Not available in the preview" />}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={onDelete}>
               <Trash2Icon /> Delete
-              {readOnly && <LockIcon className="ml-auto" aria-label="Sign in required" />}
+              {readOnly && <LockIcon className="ml-auto" aria-label="Not available in the preview" />}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -28,7 +28,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         <ThemeProvider nonce={nonce}>
           {children}
-          <Toaster richColors position="bottom-right" />
+          <Toaster position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

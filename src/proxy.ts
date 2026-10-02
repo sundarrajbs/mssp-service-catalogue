@@ -5,19 +5,19 @@ import { buildCsp, createNonce } from "@/lib/security/csp";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { refreshSession } from "@/lib/supabase/proxy";
 
-/** Pages that need the signed-in user (and session refresh). */
-const isProtected = (path: string) => path === "/app" || path.startsWith("/app/");
+/** The builder: open to everyone, but a signed-in user's session is refreshed here. */
+const isBuilder = (path: string) => path === "/app" || path.startsWith("/app/");
 /** Sign-in pages that signed-in users skip. /reset-password is excluded: it needs the recovery session. */
 const isAuthPage = (path: string) => ["/sign-in", "/sign-up", "/forgot-password"].includes(path);
 const needsSession = (path: string) =>
-  isProtected(path) || isAuthPage(path) || path === "/reset-password" || path.startsWith("/auth/");
+  isBuilder(path) || isAuthPage(path) || path === "/reset-password" || path.startsWith("/auth/");
 
 /**
  * Runs before every page request:
  * 1. Adds a per-request nonce-based Content-Security-Policy.
- * 2. Refreshes the Supabase session cookie and guards /app/**. Signed-out
- *    visitors go to sign-in and come back to the page they wanted.
- * Pages and server actions check the user again; this isn't the only guard.
+ * 2. Refreshes the Supabase session cookie. The builder (/app/**) needs no
+ *    sign-in; signed-in users simply get their saved catalogues. Server
+ *    actions that touch the database check the user themselves.
  */
 export async function proxy(request: NextRequest) {
   const env = getSupabaseEnv();
@@ -35,8 +35,9 @@ export async function proxy(request: NextRequest) {
     let user = null;
     if (env) ({ response, user } = await refreshSession(request, requestHeaders, env));
 
-    if (isProtected(path) && !user) {
-      response = redirectKeepingCookies(request, signInPathFor(`${path}${request.nextUrl.search}`), response);
+    if (path === "/app/account" && !user) {
+      // The one builder page that needs an account.
+      response = redirectKeepingCookies(request, signInPathFor(path), response);
     } else if (isAuthPage(path) && user) {
       response = redirectKeepingCookies(request, "/app/library", response);
     }

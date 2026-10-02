@@ -151,7 +151,7 @@ function ServiceForm({
         <SheetTitle className="text-xl">{readOnly ? "Service details" : service ? "Edit service" : "New service"}</SheetTitle>
         <SheetDescription>
           {readOnly
-            ? "What the customer gets, how it maps to NIST CSF and how it is priced. Sign in to edit."
+            ? "What the customer gets, how it maps to NIST CSF and how it is priced. Open the builder to edit."
             : "Describe what the customer gets, how it maps to NIST CSF and how it is priced."}
         </SheetDescription>
       </SheetHeader>
@@ -303,7 +303,7 @@ function ServiceForm({
         </Button>
         {readOnly ? (
           <Button type="button" onClick={() => prompt("edit services")}>
-            Sign in to edit
+            Edit in the builder
           </Button>
         ) : (
           <Button type="submit">{service ? "Save changes" : "Add service"}</Button>

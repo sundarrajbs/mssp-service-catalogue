@@ -18,7 +18,7 @@ type OpenPrompt = (action?: string) => void;
 
 const SignInPromptContext = createContext<OpenPrompt>(() => {});
 
-/** Opens the "sign in to build your own catalogue" dialog, e.g. `prompt("edit services")`. */
+/** Opens the "build your own catalogue" dialog, e.g. `prompt("edit services")`. */
 export function useSignInPrompt(): OpenPrompt {
   return useContext(SignInPromptContext);
 }
@@ -40,11 +40,11 @@ export function SignInPromptProvider({ children }: { children: React.ReactNode }
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <LockIcon className="text-brand size-5" aria-hidden />
-              Sign in to {action}
+              Open the builder to {action}
             </DialogTitle>
             <DialogDescription>
-              You&apos;re viewing a preview. Sign in or create a free account to build, save and export your own
-              catalogue.
+              This demo is read-only. The builder is free and needs no sign-up: your catalogue is saved in this
+              browser, and you can sign in any time to keep it in the cloud.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -52,10 +52,10 @@ export function SignInPromptProvider({ children }: { children: React.ReactNode }
               Keep browsing
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/sign-up">Create account</Link>
+              <Link href="/sign-in">Sign in</Link>
             </Button>
             <Button asChild>
-              <Link href="/sign-in">Sign in</Link>
+              <Link href="/app/library">Start building</Link>
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -104,7 +104,7 @@ export function TierPriceCard({
           />
         </div>
         <p className="text-muted-foreground pb-2 text-xs">
-          {readOnly ? "Sign in to change margins · markup on cost" : "Markup on cost"}
+          {readOnly ? "Margins are editable in the builder · markup on cost" : "Markup on cost"}
           {pricing.grossMarginPercent !== null && <> · {pricing.grossMarginPercent.toFixed(1)}% of price</>}
         </p>
       </div>

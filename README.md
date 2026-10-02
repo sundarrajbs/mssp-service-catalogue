@@ -2,15 +2,16 @@
 
 A web app for Managed Security Service Providers (MSSPs) to **design, tier, price and export** their managed security service catalogue. It is built for live partner workshops: one person drives the app on a projector or iPad while the MSSP team gives input, and at the end the team leaves with a branded PDF catalogue.
 
-- **Anyone** can read the landing page and explore a read-only demo catalogue at `/preview`, without an account.
-- **Signed-in users** build and keep any number of catalogues in their account (Supabase Auth and Postgres, protected by Row Level Security).
+- **Anyone** can use the full builder at `/app` without an account. Their catalogue is saved in their own browser (localStorage).
+- **Signing in is optional.** Signed-in users keep any number of catalogues in their account and can open them from any device (Supabase Auth and Postgres, protected by Row Level Security).
+- A read-only demo catalogue is available at `/preview`.
 
 ## Features
 
 | Page | What it does |
 |------|--------------|
-| **Landing** (`/`) | What the app does, with *Get started*, *Try the preview* and *Sign in* |
-| **Preview** (`/preview/…`) | A demo catalogue for the fictional "Sentinel Shield Managed Services". Browse the library, tiers, SLAs, pricing and coverage. Everything is read-only apart from pricing sizing, which isn't saved. Blocked actions explain why and offer sign-in. |
+| **Landing** (`/`) | What the app does, with *Start building*, *Try the preview* and *Sign in* |
+| **Preview** (`/preview/…`) | A demo catalogue for the fictional "Sentinel Shield Managed Services". Browse the library, tiers, SLAs, pricing and coverage. Everything is read-only apart from pricing sizing, which isn't saved. Blocked actions explain why and point to the builder (no sign-up needed). |
 | **Library** | 15 editable, vendor-neutral starter services (monitoring, MDR, threat hunting, IR retainer, compliance reporting including RBI, SEBI CSCRF and DPDP Act, and more). Search, filter by category, and add, edit, duplicate or delete in a side sheet. |
 | **Tiers** | Essential, Advanced and Premium to start; rename, add, reorder and remove tiers. Drag services into a tier's *Included* or *Add-ons* zone (mouse, touch or keyboard), or use the **+** menu. A side-by-side comparison matrix (✓ / Add-on / —) that you can click to edit. |
 | **SLAs** | Per tier: coverage hours (8×5, 12×6, 24×7), P1–P4 response and resolution targets, and reporting cadence. Warns you when P1 isn't tighter than P4. |
@@ -38,7 +39,8 @@ Tier price = the included services' total cost × (1 + margin %); margin is a ma
 | `/sign-in`, `/sign-up`, `/forgot-password` | signed out | Signed-in visitors are sent to the app |
 | `/reset-password` | via email link | Choose a new password |
 | `/auth/confirm` | email links | Completes magic-link, sign-up confirmation and password-reset links |
-| `/app/{library,tiers,slas,pricing,coverage,export,settings,account}` | signed in | Signed-out visitors go to `/sign-in?next=…` and come back afterwards |
+| `/app/{library,tiers,slas,pricing,coverage,export,settings}` | everyone | Guests' work is saved in the browser; signed-in users' work is saved to their account |
+| `/app/account` | signed in | Signed-out visitors go to `/sign-in?next=…` and come back afterwards |
 | `/library` and the other old routes | | Permanent redirects to `/app/…` |
 
 ## Tech stack
@@ -47,7 +49,7 @@ Next.js 16 (App Router) and TypeScript · Tailwind CSS v4 with shadcn/ui (Radix)
 
 ## Getting started
 
-You need **Node.js 20.9 or later** (22 LTS recommended) and npm. The landing page and preview work without any setup. Signing in needs a Supabase project, either local or hosted.
+You need **Node.js 20.9 or later** (22 LTS recommended) and npm. The landing page, preview and builder work without any setup (guests save in the browser). Signing in and cloud saving need a Supabase project, either local or hosted.
 
 ```bash
 git clone https://github.com/sundarrajbs/mssp-service-catalogue.git
@@ -160,10 +162,10 @@ Later, CAPTCHA (hCaptcha or Cloudflare Turnstile) can be enabled in Dashboard �
 
 ## Security model
 
-- **Sessions:** `@supabase/ssr` keeps sessions in **HTTP-only, SameSite=Lax cookies**, marked Secure in production. All Supabase calls, both auth and data, run on the server in server actions, route handlers and the proxy. The browser never holds a token, and nothing is written to localStorage.
+- **Sessions:** `@supabase/ssr` keeps sessions in **HTTP-only, SameSite=Lax cookies**, marked Secure in production. All Supabase calls, both auth and data, run on the server in server actions, route handlers and the proxy. The browser never holds a token. The only thing in localStorage is a guest's own catalogue.
 - **Route protection:**
-  - `src/proxy.ts` (Next 16's replacement for middleware) refreshes the session and redirects signed-out requests for `/app/**` to sign-in.
-  - The `/app` layout and every server action check the user again.
+  - `src/proxy.ts` (Next 16's replacement for middleware) refreshes the session. The builder is open to guests; only `/app/account` redirects signed-out requests to sign-in.
+  - The `/app` layout picks the guest (browser) or account workspace on the server, and every server action checks the user again.
   - Redirects after sign-in only go to same-site paths (`safeNextPath`).
 - **Data:** every catalogue query runs as the signed-in user, and **Row Level Security** limits it to rows where `owner_id = auth.uid()`. `owner_id` is set by the database, not the app. Catalogues are **validated with the zod schema before every save** (in the browser and again on the server) and when loaded.
 - **No service-role key** anywhere. Account deletion uses a `SECURITY DEFINER` function that can only delete the caller.
@@ -223,7 +225,7 @@ supabase/
 **Repository interface:** everything that stores catalogues implements `CatalogueRepository` (`list`, `load`, `save`, `rename`, `remove`):
 - `SupabaseCatalogueRepository` runs on the server.
 - The browser reaches it through `ServerActionRepository`, which has the same interface but calls server actions.
-- `LocalStorageCatalogueRepository` finds catalogues saved by the earlier browser-only version. After sign-in, the app offers to import that catalogue into the account and then removes the local copy.
+- `LocalStorageCatalogueRepository` stores a guest's catalogue in the browser (the same key the earlier browser-only version used). After sign-in, the app offers to import that catalogue into the account and then removes the local copy.
 
 ## Accessibility
 
@@ -252,7 +254,7 @@ supabase/
 5. **Finish the Supabase settings.** In Authentication → URL Configuration, set the **Site URL** to the production URL and add the production and preview URL patterns to **Redirect URLs** (step 4 of Supabase setup).
 6. **Custom domain (optional).** Go to Project → Settings → Domains. Then update `NEXT_PUBLIC_SITE_URL`, the Supabase Site URL and the redirect list, and redeploy.
 7. **Check it:**
-   - `curl -sI https://<your-url>/app/library` should return a redirect to `/sign-in?next=…`, along with the security headers.
+   - `curl -sI https://<your-url>/app/library` should return 200 with the security headers, and `curl -sI https://<your-url>/app/account` a redirect to `/sign-in?next=…`.
    - Sign up with a real address, confirm the email, and check that you land in the builder.
    - In Supabase → Table Editor → `catalogues`, the new row appears with your user ID as `owner_id`.
 

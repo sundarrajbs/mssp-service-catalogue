@@ -13,10 +13,10 @@ export function PreviewBanner() {
     >
       <p className="flex items-center gap-2">
         <EyeIcon className="size-4 shrink-0" aria-hidden />
-        You&apos;re viewing a preview — sign in to build your own catalogue
+        You&apos;re viewing a read-only demo — build your own catalogue, no sign-up needed
       </p>
       <Button asChild size="sm" variant="secondary" className="h-8">
-        <Link href="/sign-in">Sign in</Link>
+        <Link href="/app/library">Start building</Link>
       </Button>
     </div>
   );

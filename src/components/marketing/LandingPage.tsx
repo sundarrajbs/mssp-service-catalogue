@@ -40,9 +40,21 @@ const STEPS = [
 ];
 
 const WORKSHOP_FEATURES = [
-  { icon: MonitorIcon, title: "Projector-friendly", text: "Large type, generous spacing and the MSSP's brand colour throughout." },
-  { icon: TabletIcon, title: "Works on an iPad", text: "Touch drag-and-drop and a layout that fits tablets in portrait or landscape." },
-  { icon: KeyboardIcon, title: "Keyboard accessible", text: "Every action, including drag-and-drop, works from the keyboard." },
+  {
+    icon: MonitorIcon,
+    title: "Projector-friendly",
+    text: "Large type, generous spacing and the MSSP's brand colour throughout.",
+  },
+  {
+    icon: TabletIcon,
+    title: "Works on an iPad",
+    text: "Touch drag-and-drop and a layout that fits tablets in portrait or landscape.",
+  },
+  {
+    icon: KeyboardIcon,
+    title: "Keyboard accessible",
+    text: "Every action, including drag-and-drop, works from the keyboard.",
+  },
 ];
 
 export function LandingPage({ signedIn }: { signedIn: boolean }) {
@@ -70,7 +82,7 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
                   <Link href="/sign-in">Sign in</Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/sign-up">Get started</Link>
+                  <Link href="/app/library">Start building</Link>
                 </Button>
               </>
             )}
@@ -81,18 +93,20 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
       <main id="main" tabIndex={-1} className="flex-1 outline-none">
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-28">
           <div>
-            <p className="text-primary mb-4 text-sm font-semibold tracking-wide uppercase">For managed security service providers</p>
+            <p className="text-primary mb-4 text-sm font-semibold tracking-wide uppercase">
+              For managed security service providers
+            </p>
             <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
               Design, tier and price your security services in one workshop
             </h1>
             <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed">
-              Build a managed security service catalogue live with your team, then leave with a branded PDF ready to take
-              to customers.
+              Build a managed security service catalogue live with your team, then leave with a branded PDF ready to
+              take to customers.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link href={signedIn ? "/app/library" : "/sign-up"}>
-                  {signedIn ? "Open your catalogues" : "Get started free"}
+                <Link href="/app/library">
+                  {signedIn ? "Open your catalogues" : "Start building free"}
                   <ArrowRightIcon aria-hidden />
                 </Link>
               </Button>
@@ -100,7 +114,9 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
                 <Link href="/preview">Try the preview</Link>
               </Button>
             </div>
-            <p className="text-muted-foreground mt-4 text-sm">The preview needs no account.</p>
+            <p className="text-muted-foreground mt-4 text-sm">
+              No account needed. Your work is saved in your browser; sign in any time to keep it in the cloud.
+            </p>
           </div>
           <TierPreviewIllustration />
         </section>
@@ -134,8 +150,8 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
                 Built for the workshop room
               </h2>
               <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
-                One person drives on the big screen while the MSSP team talks. Every change updates prices, SLAs and NIST
-                coverage instantly, so decisions happen in the room.
+                One person drives on the big screen while the MSSP team talks. Every change updates prices, SLAs and
+                NIST coverage instantly, so decisions happen in the room.
               </p>
             </div>
             <ul className="grid gap-5">
@@ -161,7 +177,8 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
               </h2>
               <ul className="text-muted-foreground mt-4 grid gap-2 leading-relaxed sm:grid-cols-2">
                 {[
-                  "Each catalogue is visible only to the account that created it, enforced in the database.",
+                  "No account needed: without one, your catalogue stays in your own browser.",
+                  "Signed in, each catalogue is visible only to its owner, enforced in the database.",
                   "Sign in with a one-time email link or a password; sessions live in secure, HTTP-only cookies.",
                   "No tracking scripts and no third-party code in the page.",
                   "Export everything as JSON at any time, and delete your account whenever you like.",
@@ -180,7 +197,7 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
           <h2 className="text-3xl font-semibold tracking-tight">Ready for your next partner workshop?</h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="h-12 px-6 text-base">
-              <Link href={signedIn ? "/app/library" : "/sign-up"}>{signedIn ? "Open your catalogues" : "Create your account"}</Link>
+              <Link href="/app/library">{signedIn ? "Open your catalogues" : "Start building free"}</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
               <Link href="/preview">Explore the preview</Link>
@@ -192,7 +209,10 @@ export function LandingPage({ signedIn }: { signedIn: boolean }) {
       <footer className="border-t">
         <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap justify-between gap-4 px-5 py-8 text-sm sm:px-6">
           <p>MSSP Catalogue Builder</p>
-          <p>Service content is vendor-neutral. NIST CSF is a framework of the U.S. National Institute of Standards and Technology.</p>
+          <p>
+            Service content is vendor-neutral. NIST CSF is a framework of the U.S. National Institute of Standards and
+            Technology.
+          </p>
         </div>
       </footer>
     </div>
@@ -217,7 +237,10 @@ function TierPreviewIllustration() {
       <div className="grid grid-cols-[1.6fr_repeat(3,1fr)] gap-y-1 text-sm">
         <span />
         {["Essential", "Advanced", "Premium"].map((t) => (
-          <span key={t} className="bg-primary text-primary-foreground rounded-md py-1.5 text-center text-xs font-semibold first-of-type:ml-1">
+          <span
+            key={t}
+            className="bg-primary text-primary-foreground rounded-md py-1.5 text-center text-xs font-semibold first-of-type:ml-1"
+          >
             {t}
           </span>
         ))}

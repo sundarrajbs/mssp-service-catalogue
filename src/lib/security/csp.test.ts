@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCsp, createNonce } from "./csp";
+import { buildCsp, createNonce, frameAncestorsFromEnv } from "./csp";
 
 const directive = (csp: string, name: string) =>
   csp
@@ -47,6 +47,27 @@ describe("buildCsp", () => {
 
   it("adds unsafe-eval only in development (needed by React dev tooling)", () => {
     expect(directive(buildCsp("n", true), "script-src")).toContain("'unsafe-eval'");
+  });
+});
+
+describe("frame-ancestors allowlist", () => {
+  it("allows only 'self' plus the configured embedder origins", () => {
+    const framed = buildCsp("n", false, { frameAncestors: ["https://pryviontech.vercel.app/some/path"] });
+    expect(directive(framed, "frame-ancestors")).toEqual(["'self'", "https://pryviontech.vercel.app"]);
+  });
+
+  it("falls back to 'none' when nothing valid is configured", () => {
+    expect(directive(buildCsp("n", false, { frameAncestors: [] }), "frame-ancestors")).toEqual(["'none'"]);
+    expect(directive(buildCsp("n", false, { frameAncestors: ["not a url"] }), "frame-ancestors")).toEqual(["'none'"]);
+  });
+
+  it("parses FRAME_ANCESTORS and drops wildcards, keywords and injection attempts", () => {
+    expect(frameAncestorsFromEnv(undefined)).toEqual([]);
+    expect(
+      frameAncestorsFromEnv(
+        " https://pryviontech.vercel.app , http://localhost:3000,https://pryviontech.vercel.app, *, https://*.vercel.app, 'self', https://a.com; script-src *, javascript:alert(1)",
+      ),
+    ).toEqual(["https://pryviontech.vercel.app", "http://localhost:3000"]);
   });
 });
 

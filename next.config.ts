@@ -1,8 +1,16 @@
 import type { NextConfig } from "next";
 
-/** Static security headers for every response. The CSP is set per request in src/proxy.ts. */
+import { frameAncestorsFromEnv } from "./src/lib/security/csp";
+
+/**
+ * Static security headers for every response. The CSP is set per request in src/proxy.ts.
+ * X-Frame-Options can't name an allowed origin, so it's only sent when no trusted
+ * embedders are configured; otherwise CSP frame-ancestors (in the proxy) governs framing.
+ */
+const allowsTrustedEmbedders = frameAncestorsFromEnv(process.env.FRAME_ANCESTORS).length > 0;
+
 const securityHeaders = [
-  { key: "X-Frame-Options", value: "DENY" },
+  ...(allowsTrustedEmbedders ? [] : [{ key: "X-Frame-Options", value: "DENY" }]),
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },

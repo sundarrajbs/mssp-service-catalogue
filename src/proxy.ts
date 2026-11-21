@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { signInPathFor } from "@/lib/auth/redirect";
-import { buildCsp, createNonce } from "@/lib/security/csp";
+import { buildCsp, createNonce, frameAncestorsFromEnv } from "@/lib/security/csp";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { refreshSession } from "@/lib/supabase/proxy";
 
@@ -22,7 +22,10 @@ const needsSession = (path: string) =>
 export async function proxy(request: NextRequest) {
   const env = getSupabaseEnv();
   const nonce = createNonce();
-  const csp = buildCsp(nonce, process.env.NODE_ENV === "development", { supabaseUrl: env?.url });
+  const csp = buildCsp(nonce, process.env.NODE_ENV === "development", {
+    supabaseUrl: env?.url,
+    frameAncestors: frameAncestorsFromEnv(process.env.FRAME_ANCESTORS),
+  });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

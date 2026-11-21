@@ -177,8 +177,8 @@ Later, CAPTCHA (hCaptcha or Cloudflare Turnstile) can be enabled in Dashboard â†
 
 | Header | Value |
 |--------|-------|
-| Content-Security-Policy | Scripts need a per-request nonce (`'strict-dynamic'`); `connect-src` allows only the site and your Supabase project; `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` |
-| X-Frame-Options | `DENY` |
+| Content-Security-Policy | Scripts need a per-request nonce (`'strict-dynamic'`); `connect-src` allows only the site and your Supabase project; `frame-ancestors 'none'` (or `'self'` + the origins in `FRAME_ANCESTORS`), `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` |
+| X-Frame-Options | `DENY` (omitted when `FRAME_ANCESTORS` is set, since it can't name allowed origins; CSP `frame-ancestors` governs framing then) |
 | Strict-Transport-Security | `max-age=63072000; includeSubDomains` |
 | Referrer-Policy | `strict-origin-when-cross-origin` |
 | Permissions-Policy | camera, microphone, geolocation, payment, USB and others disabled |
